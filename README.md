@@ -91,8 +91,7 @@ Both generators and discriminators weights will be saved under the output direct
 If you meet connection problems, you can try start visdom.server. View the training progress as well as live output images by running ```python3 -m visdom``` in another terminal and opening [http://localhost:8097/](http://localhost:8097/) in your favourite web browser. This should generate training loss progress as shown below (default params, horse2zebra dataset):
 
 <img Generator Loss src="show/loss_G.png" width="300" height="300"> <img Discriminator loss src="show/loss_D.png" width="300" height="300">
-<img Generator GAN loss src="show/loss_G_GAN.png" width="300" height="300">
-<img Generator cycle loss src="show/loss_G_cycle.png" height="300" width="300">
+<img Generator GAN loss src="show/loss_G_GAN.png" width="300" height="300"> <img Generator cycle loss src="show/loss_G_Cycle.png" height="300" width="300">
 
 
 ## Test
