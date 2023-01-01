@@ -10,6 +10,7 @@ from pathlib import Path
 from enum import Enum
 from PIL import Image, ImageDraw, ImageFont
 from random import seed
+import numpy as np
 seed(random.randint(0,99))
 
 base = "/mnt/c/home/hchiang/test/Handwritten-CycleGAN"
@@ -70,7 +71,10 @@ def create_img():
     col = max_width // img_width
     col = 15        # FIX
     row = math.ceil(article_len / float(col))+newline
-    result = Image.new("RGB", (max_width, row*64), (255,255,255))
+    
+    print(f"output/{background}.png")
+    result = Image.open(f"output/{background}.png")
+    result = result.resize((max_width, row*64))
     x = 0
     y = 0       
     i = 0
@@ -96,7 +100,9 @@ def create_img():
         if x + im.width > max_width:
             x = 0
             y += img_height
-        result.paste(im, (x, y))
+        mask = get_mask(im)    
+        result.paste(im, (x, y),mask)
+        print(np.shape(result))
         i += 1
         x += im.width   
         
@@ -107,7 +113,7 @@ def create_img():
 def generate_handwritten():
     pywebio.output.put_text("generate handwritten...")
     subprocess.run(["cp", "-rf", f"{text_img_pathsaveA}", f"{text_img_pathsaveB}"])
-    subprocess.run(["python3", "predict.py", "--cuda", "--dataroot", "datasets/predict", "--generator_A2B", f"{Paths[selected].value}"])
+    subprocess.run(["python3", "predict.py",  "--dataroot", "datasets/predict", "--generator_A2B", f"{Paths[selected].value}"])
     pywebio.output.put_processbar('generate_handwritten')
     for i in range(1, 11):
         pywebio.output.set_processbar('generate_handwritten', i / 10)
@@ -145,16 +151,37 @@ def generate_text_image():
     generate_handwritten()
 
 def getWord():
-    global selected
+    global selected, background
     arcle = pywebio.input.textarea('Auto Memory Dolls', rows=6, maxlength=500, minlength=1)
     pywebio.output.put_text(arcle)
     selected = pywebio.input.select("Select Fonts:", ["YenXuan", "YuXuan", "XiZhi"])
+    background = pywebio.input.select("Select back_ground:", ["defult","textiles", "marble", "wood"])
     with open(input_text_path, 'w') as f:
         f.write(arcle)   
     
     print(selected)
+    print(background)
     generate_text_image()
     # pywebio.output.put_button("Reproduce", onclick=lambda: run_js('window.location.reload()'), color='success', outline=True)
+
+def get_mask(pic):
+    width,height=pic.size
+    pixels=pic.load()
+    mask=Image.new("L",(width,height),255)
+    mask_p=mask.load()
+    for x in range(width):
+        for y in range(height):
+            # 取得像素的 RGBA 值
+            r,g,b=pixels[x, y]
+            gray=(r+g+b)//3
+            if gray>122:
+                mask_p[x,y]=0
+            else:
+                mask_p[x,y]=255
+    return mask
+
+
+
 if __name__ == '__main__':
     pywebio.config(title="MLFianl Team 10 Demo")
     pywebio.platform.tornado.start_server(init, port=8080, log_file="buffer/file.log", debug=True)
